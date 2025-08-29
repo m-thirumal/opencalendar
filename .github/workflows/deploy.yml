@@ -5,6 +5,10 @@ on:
     branches:
       - main  # run only when pushing to main branch
 
+permissions:
+  contents: write   # 👈 allow pushing to gh-pages
+  pages: write      # 👈 allow publishing to GitHub Pages
+  
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
