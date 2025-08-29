@@ -1,10 +1,15 @@
 self.__BUILD_MANIFEST = {
   "/_error": [
-    "./static/chunks/068df7534484be4a.js"
+    "./static/chunks/389bc42dc2fdbce0.js"
   ],
   "__rewrites": {
     "afterFiles": [],
-    "beforeFiles": [],
+    "beforeFiles": [
+      {
+        "source": "/opencalendar//_next/:path+",
+        "destination": "/opencalendar/_next/:path+"
+      }
+    ],
     "fallback": []
   },
   "sortedPages": [
