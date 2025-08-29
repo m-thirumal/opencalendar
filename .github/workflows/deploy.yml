@@ -1,0 +1,31 @@
+name: Deploy OpenCal to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # run only when pushing to main branch
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.2.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Next.js (static export)
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./out
