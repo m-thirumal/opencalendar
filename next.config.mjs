@@ -6,6 +6,7 @@ const nextConfig = {
     unoptimized: true, // required for GitHub Pages
   },
   basePath: isProd ? "/opencalendar" : "",
+  assetPrefix: isProd ? "/opencalendar/" : "",
 };
 
 export default nextConfig;
