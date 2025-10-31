@@ -5,20 +5,15 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import Modal from "react-modal";
-import { createEvent } from "ics";
+import { createEvent, createEvents } from "ics";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
+import EventModal from "./components/EventModal";
 
 // --- Top Navigation Component ---
 function TopNav({ currentView, setView, downloadICS }) {
   return (
     <div className="flex gap-4 mb-4">
-      <button
-        onClick={downloadICS}
-        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        Download ICS
-      </button>
       <button
         onClick={() => setView("year")}
         className={`px-3 py-1 border rounded ${currentView==="year"?"bg-gray-200":""}`}
@@ -36,6 +31,12 @@ function TopNav({ currentView, setView, downloadICS }) {
         className={`px-3 py-1 border rounded ${currentView==="day"?"bg-gray-200":""}`}
       >
         Day
+      </button>
+            <button
+        onClick={downloadICS}
+        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+      >
+        Download ICS
       </button>
     </div>
   );
@@ -103,10 +104,10 @@ function MonthView({ selectedDate, onDateClick, onEventClick, events, setSelecte
         dateClick={onDateClick}
         eventClick={onEventClick}
         eventContent={(eventInfo) => (
-          <Tippy content={eventInfo.event.title}>
-            <div className="cursor-pointer">{eventInfo.event.title}</div>
-          </Tippy>
-        )}
+  <div className="cursor-pointer text-sm truncate">{eventInfo.event.title}</div>
+)}
+
+
       />
     </div>
   );
@@ -152,6 +153,19 @@ export default function CalendarPage() {
 
   const [currentView, setCurrentView] = useState("year");
   const [selectedDate, setSelectedDate] = useState(new Date());
+  //
+  const [open, setOpen] = useState(false);
+
+  // To persist events in localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("calendarEvents");
+    if (saved) setEvents(JSON.parse(saved));
+  }, []);
+  // Save events to localStorage on change
+  useEffect(() => {
+    localStorage.setItem("calendarEvents", JSON.stringify(events));
+  }, [events]);
+
 
   useEffect(() => { Modal.setAppElement("body"); }, []);
 
@@ -167,7 +181,7 @@ export default function CalendarPage() {
     setModalIsOpen(true);
   };
 
-  const saveEvent = () => {
+  const handleSave = () => {
     if(editingEvent?.id){
       setEvents(events.map(e => e.id===editingEvent.id ? {...e, title:titleInput} : e));
     } else {
@@ -183,13 +197,15 @@ export default function CalendarPage() {
       start:[e.start.getFullYear(), e.start.getMonth()+1, e.start.getDate(), 0,0],
       title:e.title
     }));
-    const { error,value } = icsEvents.length===1 ? createEvent(icsEvents[0]) : createEvent({events:icsEvents});
-    if(!error){
-      const blob = new Blob([value], {type:"text/calendar;charset=utf-8"});
+    const { error, value } = createEvents(icsEvents);
+    if (!error && value) {
+      const blob = new Blob([value], { type: "text/calendar;charset=utf-8" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = "calendar.ics";
       link.click();
+    } else if (error) {
+      console.error("ICS generation failed:", error);
     }
   };
 
@@ -219,19 +235,7 @@ export default function CalendarPage() {
       {currentView==="month" && <MonthView selectedDate={selectedDate} setSelectedDate={setSelectedDate} onDateClick={handleDateClick} onEventClick={handleEventClick} events={events} />}
       {currentView==="day" && <DayView selectedDate={selectedDate} setSelectedDate={setSelectedDate} onDateClick={handleDateClick} onEventClick={handleEventClick} events={events} />}
 
-      <Modal
-        isOpen={modalIsOpen}
-        onRequestClose={()=>setModalIsOpen(false)}
-        className="bg-white rounded p-6 max-w-md mx-auto mt-20 shadow-lg outline-none z-50 relative"
-        overlayClassName="fixed inset-0 bg-black/50 flex justify-center items-start z-40"
-      >
-        <h2 className="text-xl font-semibold mb-4">{editingEvent?.id ? "Edit Event" : "Add Event"}</h2>
-        <input type="text" value={titleInput} onChange={e=>setTitleInput(e.target.value)} placeholder="Event Title" className="w-full border px-3 py-2 rounded mb-4"/>
-        <div className="flex justify-end gap-2">
-          <button className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400" onClick={()=>setModalIsOpen(false)}>Cancel</button>
-          <button className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700" onClick={saveEvent}>Save</button>
-        </div>
-      </Modal>
+      <EventModal open={open} onClose={() => setOpen(false)} onSave={handleSave} />
     </div>
   );
 }
