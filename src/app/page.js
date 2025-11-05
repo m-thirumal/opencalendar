@@ -147,7 +147,6 @@ function DayView({ selectedDate, onDateClick, onEventClick, events, setSelectedD
 // --- Main Calendar Page ---
 export default function CalendarPage() {
   const [events, setEvents] = useState([]);
-  const [modalIsOpen, setModalIsOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [titleInput, setTitleInput] = useState("");
 
@@ -166,19 +165,28 @@ export default function CalendarPage() {
     localStorage.setItem("calendarEvents", JSON.stringify(events));
   }, [events]);
 
-
-  useEffect(() => { Modal.setAppElement("body"); }, []);
-
   const handleDateClick = (arg) => {
-    setEditingEvent({ start: arg.date, allDay: true });
-    setTitleInput("");
-    setModalIsOpen(true);
+    console.log("Clicked date:", arg.date);
+    setEditingEvent({
+      summary: "",
+      description: "",
+      location: "",
+      start: arg.date.toISOString().slice(0, 16), // format for datetime-local
+      end: arg.date.toISOString().slice(0, 16),
+      organizer: "",
+      attendees: "",
+      status: "CONFIRMED",
+      categories: "",
+      priority: "5",
+      url: "",
+    });
+    setOpen(true);
   };
 
   const handleEventClick = (arg) => {
     setEditingEvent({ id: arg.event.id, start: arg.event.start });
     setTitleInput(arg.event.title);
-    setModalIsOpen(true);
+    setOpen(true);
   };
 
   const handleSave = () => {
@@ -187,7 +195,7 @@ export default function CalendarPage() {
     } else {
       setEvents([...events, {id:Date.now(), title:titleInput, start:editingEvent.start, allDay:true}]);
     }
-    setModalIsOpen(false);
+    setOpen(true);
     setEditingEvent(null);
     setTitleInput("");
   };
